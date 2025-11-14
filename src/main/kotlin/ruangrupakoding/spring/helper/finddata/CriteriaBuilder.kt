@@ -15,9 +15,17 @@ import java.time.format.DateTimeFormatter
 
 object HelperCriteriaBuilder {
 
-    private val patternLocalDatetime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-    private val patternLocalDate = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    private val patternLocalTime = DateTimeFormatter.ofPattern("HH:mm:ss")
+    private fun toLocalDatetime(value: String) = LocalDateTime.parse(
+        value, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    )
+
+    private fun toLocalDate(value: String) = LocalDate.parse(
+        value, DateTimeFormatter.ofPattern("yyyy-MM-dd")
+    )
+
+    private fun toLocalTime(value: String) = LocalTime.parse(
+        value, DateTimeFormatter.ofPattern("HH:mm:ss")
+    )
 
     fun <T> toPredicate(
         find: FilterData?,
@@ -28,7 +36,7 @@ object HelperCriteriaBuilder {
         if (find == null) return null
         return when {
             find.field != null && find.criteria != null && find.value != null -> {
-                val path =  resolvePath(root, find.field, joins) //root.get<Any>(find.field)
+                val path = resolvePath(root, find.field, joins) //root.get<Any>(find.field)
                 when (find.criteria) {
                     Criteria.NEQ -> cb.notEqual(path, find.value)
                     Criteria.LIKE -> cb.like(
@@ -41,102 +49,65 @@ object HelperCriteriaBuilder {
                     Criteria.ISNULL -> cb.isNull(path)
                     Criteria.ISNOTNULL -> cb.isNotNull(path)
                     Criteria.GT -> cb.greaterThan(path as Expression<Double>, find.value.toDouble())
-                    Criteria.GTE -> cb.greaterThanOrEqualTo(
-                        path as Expression<Double>,
-                        find.value.toDouble()
-                    )
+                    Criteria.GTE -> cb.greaterThanOrEqualTo(path as Expression<Double>, find.value.toDouble())
 
                     Criteria.LT -> cb.lessThan(path as Expression<Double>, find.value.toDouble())
-                    Criteria.LTE -> cb.lessThanOrEqualTo(
-                        path as Expression<Double>,
-                        find.value.toDouble()
-                    )
+                    Criteria.LTE -> cb.lessThanOrEqualTo(path as Expression<Double>, find.value.toDouble())
 
                     Criteria.GTDT -> cb.greaterThan(
-                        path as Expression<LocalDateTime>, LocalDateTime.parse(
-                            find.value, patternLocalDatetime
-                        )
+                        path as Expression<LocalDateTime>, toLocalDatetime(find.value)
                     )
+
                     Criteria.GTEDT -> cb.greaterThanOrEqualTo(
-                        path as Expression<LocalDateTime>, LocalDateTime.parse(
-                            find.value, patternLocalDatetime
-                        )
+                        path as Expression<LocalDateTime>, toLocalDatetime(find.value)
                     )
 
                     Criteria.LTDT -> cb.lessThan(
-                        path as Expression<LocalDateTime>, LocalDateTime.parse(
-                            find.value, patternLocalDatetime
-                        )
+                        path as Expression<LocalDateTime>, toLocalDatetime(find.value)
                     )
+
                     Criteria.LTEDT -> cb.lessThanOrEqualTo(
-                        path as Expression<LocalDateTime>, LocalDateTime.parse(
-                            find.value, patternLocalDatetime
-                        )
+                        path as Expression<LocalDateTime>, toLocalDatetime(find.value)
                     )
 
-                    Criteria.GTD -> cb.greaterThan(
-                        path as Expression<LocalDate>, LocalDate.parse(
-                            find.value,
-                            patternLocalDate
-                        )
-                    )
+                    Criteria.GTD -> cb.greaterThan(path as Expression<LocalDate>, toLocalDate(find.value))
+
                     Criteria.GTED -> cb.greaterThanOrEqualTo(
-                        path as Expression<LocalDate>, LocalDate.parse(
-                            find.value,
-                            patternLocalDate
-                        )
+                        path as Expression<LocalDate>, toLocalDate(find.value)
                     )
 
-                    Criteria.LTD -> cb.lessThan(
-                        path as Expression<LocalDate>, LocalDate.parse(
-                            find.value,
-                            patternLocalDate
-                        )
-                    )
+                    Criteria.LTD -> cb.lessThan(path as Expression<LocalDate>, toLocalDate(find.value))
+
                     Criteria.LTED -> cb.lessThanOrEqualTo(
-                        path as Expression<LocalDate>, LocalDate.parse(
-                            find.value,
-                            patternLocalDate
-                        )
+                        path as Expression<LocalDate>, toLocalDate(find.value)
                     )
 
-                    Criteria.GTT -> cb.greaterThan(
-                        path as Expression<LocalTime>, LocalTime.parse(
-                            find.value,
-                            patternLocalTime
-                        )
-                    )
+                    Criteria.GTT -> cb.greaterThan(path as Expression<LocalTime>, toLocalTime(find.value))
+
                     Criteria.GTET -> cb.greaterThanOrEqualTo(
-                        path as Expression<LocalTime>, LocalTime.parse(
-                            find.value,
-                            patternLocalTime
-                        )
+                        path as Expression<LocalTime>, toLocalTime(find.value)
                     )
 
-                    Criteria.LTT -> cb.lessThan(
-                        path as Expression<LocalTime>, LocalTime.parse(
-                            find.value,
-                            patternLocalTime
-                        )
-                    )
+                    Criteria.LTT -> cb.lessThan(path as Expression<LocalTime>, toLocalTime(find.value))
+
                     Criteria.LTET -> cb.lessThanOrEqualTo(
-                        path as Expression<LocalTime>, LocalTime.parse(
-                            find.value,
-                            patternLocalTime
-                        )
+                        path as Expression<LocalTime>, toLocalTime(find.value)
                     )
 
                     else -> cb.equal(path, find.value)
                 }
             }
+
             find.or != null -> {
                 val filterOr = find.or.mapNotNull { toPredicate(it, cb, root, joins) }
                 cb.or(*filterOr.toTypedArray())
             }
+
             find.and != null -> {
                 val filterOr = find.and.mapNotNull { toPredicate(it, cb, root, joins) }
                 cb.and(*filterOr.toTypedArray())
             }
+
             else -> null
         }
     }
